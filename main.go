@@ -51,13 +51,26 @@ func main() {
 		fmt.Printf("Id: %s, Name: %s, Age: %d\n", record.Id, name, age)
 	}
 
+	type RecordIdWithError struct {
+		recordId platio.RecordId
+		error    error
+	}
+	recordIdWithErrors := make(chan RecordIdWithError)
+
 	for _, recordWithAge := range recordWithAges {
-		err = api.UpdateRecord(recordWithAge.Id, &platio.Values{
-			Age: &platio.NumberValue{float64(recordWithAge.age + 1)},
-		})
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
-			return
+		recordWithAge := recordWithAge
+		go func() {
+			err = api.UpdateRecord(recordWithAge.Id, &platio.Values{
+				Age: &platio.NumberValue{float64(recordWithAge.age + 1)},
+			})
+			recordIdWithErrors <- RecordIdWithError{recordWithAge.Id, err}
+		}()
+	}
+
+	for n := 0; n < len(recordWithAges); n++ {
+		recordIdWithError := <-recordIdWithErrors
+		if recordIdWithError.error != nil {
+			fmt.Fprintf(os.Stderr, "%s: %s\n", recordIdWithError.recordId, recordIdWithError.error)
 		}
 	}
 }
