@@ -46,6 +46,8 @@ func (api *API) GetLatestRecords(count int) ([]Record, error) {
 }
 
 func (api *API) UpdateRecord(id RecordId, values *Values) error {
+	url := fmt.Sprintf("%s/records/%s", api.collectionUrl, id)
+
 	body, err := json.Marshal(struct {
 		Values  *Values `json:"values"`
 		Replace bool    `json:"replace"`
@@ -54,7 +56,7 @@ func (api *API) UpdateRecord(id RecordId, values *Values) error {
 		return err
 	}
 
-	req, err := http.NewRequest("PUT", api.collectionUrl+"/records/"+id, bytes.NewReader(body))
+	req, err := http.NewRequest("PUT", url, bytes.NewReader(body))
 	if err != nil {
 		return err
 	}
@@ -70,6 +72,7 @@ func (api *API) UpdateRecord(id RecordId, values *Values) error {
 func (api *API) sendRequest(req *http.Request) (*http.Response, error) {
 	req.Header.Add("Authorization", api.authorization)
 	req.Header.Add("Content-Type", "application/json")
+
 	res, err := api.client.Do(req)
 	if err != nil {
 		return res, err

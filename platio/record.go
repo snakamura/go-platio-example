@@ -11,6 +11,22 @@ type Record struct {
 	Values Values   `json:"values"`
 }
 
+func (record *Record) Name() string {
+	if record.Values.Name != nil {
+		return record.Values.Name.Value
+	} else {
+		return ""
+	}
+}
+
+func (record *Record) Age() int {
+	if record.Values.Age != nil {
+		return int(record.Values.Age.Value)
+	} else {
+		return 0
+	}
+}
+
 type Values struct {
 	Name *StringValue `json:"cd33ed98,omitempty"`
 	Age  *NumberValue `json:"ce0f2361,omitempty"`

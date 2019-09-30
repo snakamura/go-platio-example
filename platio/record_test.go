@@ -37,6 +37,58 @@ func TestRecord(t *testing.T) {
 			t.Error("Unmarshaling Record failed", err, record)
 		}
 	})
+
+	t.Run("Name", func(t *testing.T) {
+		t.Run("should return a name if specified", func(t *testing.T) {
+			record := Record{
+				Id: "r11111111111111111111111111",
+				Values: Values{
+					Name: &StringValue{"abc"},
+				},
+			}
+
+			if record.Name() != "abc" {
+				t.Error("Name should be abc", record.Name())
+			}
+		})
+
+		t.Run("should return an empty string if not specified", func(t *testing.T) {
+			record := Record{
+				Id:     "r11111111111111111111111111",
+				Values: Values{},
+			}
+
+			if record.Name() != "" {
+				t.Error("Name should be empty", record.Name())
+			}
+		})
+	})
+
+	t.Run("Age", func(t *testing.T) {
+		t.Run("should return an age if specified", func(t *testing.T) {
+			record := Record{
+				Id: "r11111111111111111111111111",
+				Values: Values{
+					Age: &NumberValue{30},
+				},
+			}
+
+			if record.Age() != 30 {
+				t.Error("Age should be 30", record.Age())
+			}
+		})
+
+		t.Run("should return 0 if not specified", func(t *testing.T) {
+			record := Record{
+				Id:     "r11111111111111111111111111",
+				Values: Values{},
+			}
+
+			if record.Age() != 0 {
+				t.Error("Age should be 0", record.Age())
+			}
+		})
+	})
 }
 
 func TestValues(t *testing.T) {

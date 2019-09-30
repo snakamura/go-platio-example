@@ -24,31 +24,8 @@ func main() {
 		return
 	}
 
-	type RecordWithAge struct {
-		platio.Record
-		age int
-	}
-	recordWithAges := make([]RecordWithAge, 0, len(records))
-
 	for _, record := range records {
-		name := func() string {
-			if record.Values.Name != nil {
-				return record.Values.Name.Value
-			} else {
-				return ""
-			}
-		}()
-		age := func() int {
-			if record.Values.Age != nil {
-				return int(record.Values.Age.Value)
-			} else {
-				return 0
-			}
-		}()
-
-		recordWithAges = append(recordWithAges, RecordWithAge{record, age})
-
-		fmt.Printf("Id: %s, Name: %s, Age: %d\n", record.Id, name, age)
+		fmt.Printf("Id: %s, Name: %s, Age: %d\n", record.Id, record.Name(), record.Age())
 	}
 
 	type RecordIdWithError struct {
@@ -57,17 +34,17 @@ func main() {
 	}
 	recordIdWithErrors := make(chan RecordIdWithError)
 
-	for _, recordWithAge := range recordWithAges {
-		recordWithAge := recordWithAge
+	for _, record := range records {
+		record := record
 		go func() {
-			err = api.UpdateRecord(recordWithAge.Id, &platio.Values{
-				Age: &platio.NumberValue{float64(recordWithAge.age + 1)},
+			err = api.UpdateRecord(record.Id, &platio.Values{
+				Age: &platio.NumberValue{float64(record.Age() + 1)},
 			})
-			recordIdWithErrors <- RecordIdWithError{recordWithAge.Id, err}
+			recordIdWithErrors <- RecordIdWithError{record.Id, err}
 		}()
 	}
 
-	for n := 0; n < len(recordWithAges); n++ {
+	for range records {
 		recordIdWithError := <-recordIdWithErrors
 		if recordIdWithError.error != nil {
 			fmt.Fprintf(os.Stderr, "%s: %s\n", recordIdWithError.recordId, recordIdWithError.error)
