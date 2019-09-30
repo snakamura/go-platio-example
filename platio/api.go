@@ -3,6 +3,7 @@ package platio
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -24,8 +25,9 @@ func NewAPI(collectionUrl string, authorization string) *API {
 	}
 }
 
-func (api *API) GetLatestRecord() (*Record, error) {
-	req, err := http.NewRequest("GET", api.collectionUrl+"/records?limit=1", nil)
+func (api *API) GetLatestRecords(count int) ([]Record, error) {
+	url := fmt.Sprintf("%s/records?limit=%d", api.collectionUrl, count)
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -38,11 +40,9 @@ func (api *API) GetLatestRecord() (*Record, error) {
 	var records []Record
 	if err = json.NewDecoder(res.Body).Decode(&records); err != nil {
 		return nil, err
-	} else if len(records) == 0 {
-		return nil, nil
 	}
 
-	return &records[0], nil
+	return records, nil
 }
 
 func (api *API) UpdateRecord(id RecordId, values *Values) error {

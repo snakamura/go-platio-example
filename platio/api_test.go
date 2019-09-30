@@ -14,9 +14,9 @@ import (
 
 const authorization = "auth"
 
-func TestLatestRecord(t *testing.T) {
+func TestGetLatestRecords(t *testing.T) {
 	t.Run("should get the latest record", func(t *testing.T) {
-		records := `[
+		recordsJson := `[
           {
             "id": "r11111111111111111111111111",
             "values": {
@@ -31,61 +31,32 @@ func TestLatestRecord(t *testing.T) {
             }
           }
         ]`
-		expected := &Record{
-			Id: "r11111111111111111111111111",
-			Values: Values{
-				Name: &StringValue{"abc"},
-				Age:  &NumberValue{30},
+		expected := []Record{
+			Record{
+				Id: "r11111111111111111111111111",
+				Values: Values{
+					Name: &StringValue{"abc"},
+					Age:  &NumberValue{30},
+				},
 			},
 		}
 
 		testServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			if req.URL.String() != "/records?limit=1" {
+			if req.URL.String() != "/records?limit=5" {
 				t.Error("Invalid request path", req.URL)
 			}
 			if req.Header.Get("Authorization") != authorization {
 				t.Error("Invalid Authorization header", req.Header)
 			}
 			res.WriteHeader(200)
-			res.Write([]byte(records))
+			res.Write([]byte(recordsJson))
 		}))
 		defer testServer.Close()
 
 		api := NewAPI(testServer.URL, authorization)
-		record, err := api.GetLatestRecord()
-		if err != nil || !reflect.DeepEqual(record, expected) {
-			t.Error("It should return the latest record", err, record)
-		}
-	})
-
-	t.Run("should return nil if no records", func(t *testing.T) {
-		records := `[]`
-		var expected *Record = nil
-
-		testServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			res.WriteHeader(200)
-			res.Write([]byte(records))
-		}))
-		defer testServer.Close()
-
-		api := NewAPI(testServer.URL, authorization)
-		record, err := api.GetLatestRecord()
-		if err != nil || !reflect.DeepEqual(record, expected) {
-			t.Error("It should return nil if no records", err, record)
-		}
-	})
-
-	t.Run("should treat an error response as an error", func(t *testing.T) {
-		testServer := httptest.NewServer(http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-			res.WriteHeader(400)
-			res.Write([]byte(""))
-		}))
-		defer testServer.Close()
-
-		api := NewAPI(testServer.URL, authorization)
-		record, err := api.GetLatestRecord()
-		if err == nil || err.Error() != "400 Bad Request" || record != nil {
-			t.Error("It should return an error on an error response", err, record)
+		records, err := api.GetLatestRecords(5)
+		if err != nil || !reflect.DeepEqual(records, expected) {
+			t.Error("It should return the latest record", err, records)
 		}
 	})
 }
